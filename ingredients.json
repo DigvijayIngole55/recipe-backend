@@ -1,0 +1,25 @@
+{
+    "ingredients": [
+      "salt", "sugar", "pepper", "olive oil", "butter", "garlic", "onion", 
+      "tomato", "basil", "oregano", "thyme", "flour", "milk", "eggs", 
+      "cheese", "chicken", "beef", "pork", "fish", "carrot", "potato",
+      "celery", "broccoli", "spinach", "lettuce", "lemon", "lime", "vinegar",
+      "rice", "pasta", "bread", "corn", "beans", "peas", "ginger", "turmeric",
+      "cinnamon", "cocoa", "vanilla", "honey", "soy sauce", "mustard", "ketchup",
+      "mayonnaise", "yogurt", "cream", "baking soda", "baking powder", "nuts",
+      "seeds", "chili", "paprika", "cucumber", "zucchini", "eggplant",
+      "apple", "banana", "strawberry", "blueberry", "raspberry", "grape",
+      "orange", "peach", "pear", "pineapple", "mango", "avocado", "cabbage",
+      "cauliflower", "bell pepper", "pepper", "mushroom", "kale", "arugula",
+      "cilantro", "parsley", "dill", "rosemary", "sage", "clove", "nutmeg",
+      "cardamom", "cumin", "fennel", "paprika", "bacon", "sausage", "tofu",
+      "lentils", "chickpeas", "quinoa", "barley", "oats", "chocolate", "wine",
+      "beer", "whiskey", "vodka", "gin", "rum",
+      "turmeric", "coriander", "cumin", "fennel", "fenugreek", "asafoetida",
+      "mustard seeds", "curry leaves", "cardamom", "cloves", "cinnamon", "nutmeg",
+      "mace", "peppercorns", "ginger", "garlic", "green chili", "red chili",
+      "bay leaf", "tamarind", "coconut", "ghee", "yogurt", "paneer", "dal",
+      "chana", "rajma", "basmati rice", "saffron", "mango powder", "pomegranate seeds"
+    ]
+  }
+  
