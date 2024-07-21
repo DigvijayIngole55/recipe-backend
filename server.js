@@ -10,12 +10,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+app.use(cors()); // Enable CORS for all origins
 app.use(bodyParser.json());
-
-app.use('/api', tesseractRoutes); // Ensure this matches the endpoint being called
+app.use('/api', tesseractRoutes);
 app.use('/recipes', recipeRoutes);
+app.use('/uploads', express.static('uploads')); // Serve static files from uploads folder
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
