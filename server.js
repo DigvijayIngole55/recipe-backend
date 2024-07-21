@@ -1,17 +1,23 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const ocrRoutes = require('./Tesseract'); // Adjust the path as needed
-const recipeRoutes = require('./routes/recipes'); // Import the recipes route
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+import tesseractRoutes from './Tesseract.js';
+import recipeRoutes from './recipes.js';
+import imageRoutes from './image.js';
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 
 app.use(cors());
-app.use(bodyParser.json()); // Use body-parser middleware to parse JSON requests
-app.use('/ocr', ocrRoutes);
-app.use('/recipes', recipeRoutes); // Use the recipes route
+app.use(bodyParser.json());
+app.use('/api', tesseractRoutes);
+app.use('/recipes', recipeRoutes);
+app.use('/images', imageRoutes);
+app.use('/uploads', express.static('uploads')); // Serve static files from uploads folder
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

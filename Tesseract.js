@@ -1,78 +1,94 @@
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const tesseract = require('tesseract.js');
-const router = express.Router();
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
 
+import tesseract from 'tesseract.js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import cors from 'cors';
+
+const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
-let ingredientsFilePath = path.join(__dirname, '../ingredients.json'); // Adjust path as needed
-if (!fs.existsSync(ingredientsFilePath)) {
-    fs.writeFileSync(ingredientsFilePath, JSON.stringify({ ingredients: [] }, null, 2));
-}
+router.use(cors()); // Enable CORS
 
-let commonIngredients = new Set(require(ingredientsFilePath).ingredients);
+const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyC0b8LLFXvywZ1p03sySMjEQPWFER04gtk';
+const genAI = new GoogleGenerativeAI(apiKey);
 
-// Patterns to exclude common non-ingredient text
-const excludePatterns = [
-  /^\d+$/,            // Numbers (quantities, prices)
-  /^\d+\.\d+$/,       // Prices with decimal points
-  /^[\$£€¥]\d+$/,     // Prices with currency symbols
-  /^[a-zA-Z]{1,2}$/,  // Single or double letters
-  /^x\d+$/,           // Quantity with 'x' prefix (e.g., x2, x3)
-  /^lb$/,             // Pound unit
-  /^(oz|kg|g|ml|l)$/, // Weight/Volume units
-  /^large$/i,         // Size
-  /^small$/i,         // Size
-  /^(san|diego|ca|store|supermarket|total)$/i, // Common non-ingredient words
-  /^(supermarket|store|grocery|total|paper|wipes)$/i // More common store-related words
-];
-
-// Additional non-ingredient terms to exclude
-const nonIngredients = new Set([
-  'supermarket', 'store', 'total', 'san', 'diego', 'ca', 'paper', 'wipes'
-]);
-
-router.post('/upload', upload.single('image'), async (req, res) => {
-    console.log('Received a new request to /upload');
-    if (!req.file) {
-        console.log('No file uploaded');
-        return res.status(400).send({ message: 'Please upload an image.' });
-    }
-
-    try {
-        console.log('Processing the uploaded image...');
-        const { data: { text } } = await tesseract.recognize(path.join(__dirname, req.file.path));
-        console.log('OCR Text:', text);
-
-        // Extract words from the recognized text and convert to lowercase
-        const words = text.match(/[a-zA-Z]+/g).map(word => word.toLowerCase());
-        console.log('Words extracted:', words);
-
-        // Filter words to match common ingredients and remove non-ingredient patterns
-        let ingredients = words.filter(word => commonIngredients.has(word) && !excludePatterns.some(pattern => pattern.test(word)));
-        console.log('Filtered ingredients:', ingredients);
-
-        // Add new ingredients to the dynamic list and update the JSON file
-        const newIngredients = words.filter(word => !commonIngredients.has(word) && !excludePatterns.some (pattern => pattern.test(word)) && !nonIngredients.has(word));
-        console.log('New ingredients to add:', newIngredients);
-        
-        if (newIngredients.length > 0) {
-            newIngredients.forEach(ingredient => commonIngredients.add(ingredient));
-            fs.writeFileSync(ingredientsFilePath, JSON.stringify({ ingredients: Array.from(commonIngredients) }, null, 2));
-            console.log('Updated ingredients list:', Array.from(commonIngredients));
-        }
-
-        // Remove duplicates
-        ingredients = [...new Set(ingredients)];
-        console.log('Final ingredients list:', ingredients);
-
-        res.send({ message: 'Image processed successfully.', ingredients });
-    } catch (error) {
-        console.error('Error processing image:', error);
-        res.status(500).send({ message: 'Error processing image.', error });
-    }
+const model = genAI.getGenerativeModel({
+  model: 'gemini-1.5-flash',
 });
 
-module.exports = router;
+const generationConfig = {
+  temperature: 1,
+  topP: 0.95,
+  topK: 64,
+  maxOutputTokens: 8192,
+  responseMimeType: 'text/plain',
+};
+
+async function analyzeIngredients(text) {
+  const prompt = `${text} from this list return ingredients that can be used as raw materials, remove brand name, measurements for cooking as a JSON response: {"ingredients": ["ingredient1", "ingredient2", ...]}`;
+
+  const chatSession = model.startChat({
+    generationConfig,
+    history: [
+      {
+        role: 'user',
+        parts: [{ text: prompt }],
+      },
+    ],
+  });
+
+  try {
+    const result = await chatSession.sendMessage('Generate ingredient list.');
+    let responseText = result.response.text();
+
+    console.log('Response from Google Generative AI:', responseText); // Debugging line
+
+    // Remove code block delimiters if they exist
+    responseText = responseText.replace(/```json\n|\n```/g, '');
+
+    // Parse the JSON response
+    const jsonResponse = JSON.parse(responseText);
+
+    // Check if the response structure matches the expected format
+    if (!jsonResponse.ingredients || !Array.isArray(jsonResponse.ingredients)) {
+      throw new Error('Response does not contain the expected JSON structure');
+    }
+
+    return jsonResponse;
+  } catch (error) {
+    console.error('Error from Google Generative AI:', error);
+    throw error;
+  }
+}
+
+router.post('/upload', upload.single('image'), async (req, res) => {
+  console.log('Upload endpoint called');
+  if (!req.file) {
+    console.error('No file uploaded');
+    return res.status(400).send({ message: 'Please upload an image.' });
+  }
+
+  try {
+    const filePath = path.resolve(req.file.path);
+    const mimeType = req.file.mimetype;
+    console.log('Uploaded file path:', filePath);
+    console.log('Original file name:', req.file.originalname);
+    console.log('Determined MIME type:', mimeType);
+
+    // OCR processing using Tesseract.js
+    const { data: { text } } = await tesseract.recognize(filePath);
+    const ocrText = text.match(/[a-zA-Z]+/g).join(' ');
+
+    // Analyze text with Google Generative AI to identify ingredients
+    const ingredients = await analyzeIngredients(ocrText);
+
+    res.status(200).json({ message: 'Image processed successfully.', ingredients: ingredients.ingredients });
+  } catch (error) {
+    console.error('Error processing image:', error);
+    res.status(500).json({ message: 'Error processing image.', error: error.toString() });
+  }
+});
+
+export default router;
