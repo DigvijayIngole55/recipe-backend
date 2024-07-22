@@ -11,7 +11,7 @@ const upload = multer({ dest: 'uploads/' });
 
 router.use(cors()); // Enable CORS
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GOOGLE_GEMINI_IMAGE_API_KEY;
 console.log("Using Google Generative AI API key:", apiKey);
 const genAI = new GoogleGenerativeAI(apiKey);
 
