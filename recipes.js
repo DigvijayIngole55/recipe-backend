@@ -147,4 +147,5 @@ router.post('/generate-recipes', async (req, res) => {
   }
 });
 
+export { fetchImageFromGetImgAI, fetchRecipes };
 export default router;

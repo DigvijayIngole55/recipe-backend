@@ -1,10 +1,12 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-
 import tesseract from 'tesseract.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
