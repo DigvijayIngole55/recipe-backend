@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
+import http from 'http'; // Import http module to create the server
 import tesseractRoutes from './Tesseract.js';
 import recipeRoutes from './recipes.js';
 
@@ -21,6 +22,6 @@ const server = http.createServer(app);
 // Set timeout to 120 seconds (120000 milliseconds)
 server.setTimeout(120000);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
