@@ -118,10 +118,14 @@ router.post('/fetch-images', async (req, res) => {
             public_id: recipe.name,
           });
           recipe.image = result.secure_url;
+          console.log(`Uploaded image URL for ${recipe.name}: ${recipe.image}`);
         } catch (uploadError) {
           console.error(`Error uploading image for ${recipe.name}:`, uploadError);
           recipe.image = '';
         }
+      } else {
+        console.warn(`No image found for recipe: ${recipe.name}`);
+        recipe.image = '';
       }
       recipesWithImages.push(recipe);
     }
