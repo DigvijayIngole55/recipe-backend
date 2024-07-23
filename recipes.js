@@ -2,7 +2,7 @@ import express from 'express';
 import fetch from 'node-fetch';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
-import cloudinary from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config();
 
@@ -28,6 +28,13 @@ const getImgAPIKeys = [
 ];
 
 let apiKeyIndex = 0;
+
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const fetchRecipes = async (ingredients) => {
   const prompt = `Ingredients list: ${ingredients.join(', ')}\nGenerate recipes based on these ingredients in the following JSON format: { "recipes": [{"name": "recipe name", "description": "recipe description", "type": "type of recipe", "cuisine": ["cuisine types"], "missing_ingredients_major": ["missing ingredients"], "allergen_type": ["allergens"], "dietary_type": ["dietary types"], "cooking_level": "cooking level", "instruction": ["instructions"]}]}`;
@@ -77,7 +84,7 @@ const fetchImageFromGetImgAI = async (prompt) => {
     const json = await res.json();
     if (res.ok && json.image) {
       console.log(`Image fetched successfully for prompt: ${prompt}`);
-      return json.image;
+      return `data:image/jpeg;base64,${json.image}`; // Return base64-encoded image with proper prefix
     } else {
       console.error('Error fetching image from getimg.ai:', json.error ? json.error.message : 'Unknown error');
       return null;
@@ -113,19 +120,16 @@ router.post('/fetch-images', async (req, res) => {
       const image = await fetchImageFromGetImgAI(`Image of ${recipe.name}`);
       if (image) {
         try {
-          const result = await cloudinary.v2.uploader.upload(image, {
+          const result = await cloudinary.uploader.upload(image, {
             folder: 'recipes',
             public_id: recipe.name,
           });
           recipe.image = result.secure_url;
-          console.log(`Uploaded image URL for ${recipe.name}: ${recipe.image}`);
+          console.log(`Image uploaded successfully for recipe ${recipe.name}: ${result.secure_url}`);
         } catch (uploadError) {
           console.error(`Error uploading image for ${recipe.name}:`, uploadError);
           recipe.image = '';
         }
-      } else {
-        console.warn(`No image found for recipe: ${recipe.name}`);
-        recipe.image = '';
       }
       recipesWithImages.push(recipe);
     }
