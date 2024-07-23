@@ -94,8 +94,13 @@ const fetchImageFromGetImgAI = async (prompt) => {
 // Route to generate recipes
 router.post('/generate-recipes', async (req, res) => {
   const { ingredients } = req.body;
-  const recipes = await fetchRecipes(ingredients);
-  res.status(200).json({ recipes });
+  try {
+    const recipes = await fetchRecipes(ingredients);
+    res.status(200).json({ recipes });
+  } catch (error) {
+    console.error('Error in /generate-recipes:', error);
+    res.status(500).json({ error: 'Failed to generate recipes' });
+  }
 });
 
 // Route to fetch images for recipes
@@ -103,19 +108,28 @@ router.post('/fetch-images', async (req, res) => {
   const { recipes } = req.body;
   const recipesWithImages = [];
 
-  for (const recipe of recipes) {
-    const image = await fetchImageFromGetImgAI(`Image of ${recipe.name}`);
-    if (image) {
-      const result = await cloudinary.v2.uploader.upload(image, {
-        folder: 'recipes',
-        public_id: recipe.name,
-      });
-      recipe.image = result.secure_url;
+  try {
+    for (const recipe of recipes) {
+      const image = await fetchImageFromGetImgAI(`Image of ${recipe.name}`);
+      if (image) {
+        try {
+          const result = await cloudinary.v2.uploader.upload(image, {
+            folder: 'recipes',
+            public_id: recipe.name,
+          });
+          recipe.image = result.secure_url;
+        } catch (uploadError) {
+          console.error(`Error uploading image for ${recipe.name}:`, uploadError);
+          recipe.image = '';
+        }
+      }
+      recipesWithImages.push(recipe);
     }
-    recipesWithImages.push(recipe);
+    res.status(200).json({ recipes: recipesWithImages });
+  } catch (error) {
+    console.error('Error in /fetch-images:', error);
+    res.status(500).json({ error: 'Failed to fetch images for recipes' });
   }
-
-  res.status(200).json({ recipes: recipesWithImages });
 });
 
 export { fetchRecipes, fetchImageFromGetImgAI };

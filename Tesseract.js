@@ -44,7 +44,7 @@ async function analyzeIngredients(text) {
 
   try {
     const result = await chatSession.sendMessage('Generate ingredient list.');
-    let responseText = result.response.text();
+    let responseText = await result.response.text();
 
     console.log('Response from Google Generative AI:', responseText); // Debugging line
 
