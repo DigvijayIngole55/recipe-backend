@@ -66,8 +66,8 @@ const fetchImageFromGetImgAI = async (prompt) => {
     },
     body: JSON.stringify({
       model: 'stable-diffusion-xl-v1-0',
-      prompt: prompt,
-      negative_prompt: 'Disfigured, cartoon, blurry',
+      prompt: `${prompt}, ultra-realistic, highly detailed, 4k resolution, sharp focus, professional photo`,
+      negative_prompt: 'cartoon, animated, blurry, disfigured, low quality, low resolution',
       width: 512,
       height: 512,
       steps: 30,
